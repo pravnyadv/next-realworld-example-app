@@ -6,9 +6,23 @@ import ListErrors from "../../components/common/ListErrors";
 import TagInput from "../../components/editor/TagInput";
 import ArticleAPI from "../../lib/api/article";
 import storage from "../../lib/utils/storage";
+import checkLogin from "../../lib/utils/checkLogin";
 import editorReducer from "../../lib/utils/editorReducer";
 
-const PublishArticleEditor = () => {
+const PublishArticleEditor = ({ res }) => {
+  const { data: currentUser } = useSWR("user", storage);
+  const isLoggedIn = checkLogin(currentUser);
+
+  if (isLoggedIn) {
+    if (res) {
+      res.writeHead(302, {
+        Location: "/",
+      });
+      res.end();
+    }
+    Router.push(`/`);
+  }
+
   const initialState = {
     title: "",
     description: "",
@@ -19,7 +33,6 @@ const PublishArticleEditor = () => {
   const [isLoading, setLoading] = React.useState(false);
   const [errors, setErrors] = React.useState([]);
   const [posting, dispatch] = React.useReducer(editorReducer, initialState);
-  const { data: currentUser } = useSWR("user", storage);
 
   const handleTitle = (e) =>
     dispatch({ type: "SET_TITLE", text: e.target.value });
@@ -107,6 +120,12 @@ const PublishArticleEditor = () => {
       </div>
     </div>
   );
+};
+
+PublishArticleEditor.getInitialProps = async ({ res }) => {
+  return {
+    res,
+  };
 };
 
 export default PublishArticleEditor;
